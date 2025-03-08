@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Tarot Readings</title>
+  <style>
+    :root {
+      --primary-color: #2c0d45;
+      --secondary-color: #7b1fa2;
+      --accent-color: #ff9800;
+      --text-color: #e0e0e0;
+      --card-bg: linear-gradient(135deg, #3a1c59, #191231);
+      --body-bg: linear-gradient(to bottom right, #121212, #2c0d45);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Background container that will tilt */
+    #backgroundContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: -1;
+      transform-style: preserve-3d;
+      transition: transform 0.1s ease-out;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--body-bg);
+      color: var(--text-color);
+      text-align: center;
+      padding: 50px 20px;
+      margin: 0;
+      min-height: 100vh;
+      transition: background 0.5s ease;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      color: var(--accent-color);
+      font-size: 3rem;
+      text-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+      margin-bottom: 10px;
+      animation: fadeIn 1s ease;
+    }
+
+    p {
+      color: var(--text-color);
+      margin-bottom: 30px;
+      font-size: 1.2rem;
+      animation: fadeIn 1.2s ease;
+    }
+
+    /* New layout for the question container using flexbox */
+    #questionContainer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 80%;
+      max-width: 800px;
+      margin: 0 auto 30px;
+      animation: fadeIn 1.4s ease;
+
+      position: sticky;
+      top: 20px;
+      /* added offset */
+      z-index: 100;
+      /* optional, to ensure it stays on top */
+      /* background: var(--body-bg); */
+      /* optional, to cover content underneath */
+    }
+
+    #cardInputs {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      max-width: 2000px;
+      margin: 0 auto 10px;
+      animation: fadeIn 1.4s ease;
+      flex-wrap: wrap;
+    }
+
+    /* Wrap the input and its dropdown */
+    .input-wrapper {
+      position: relative;
+      flex: 1;
+    }
+
+    .card-input-wrapper {
+      display: inline-block;
+      width: 250px;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      opacity: 1;
+      transform: translateY(0);
+      margin: 0 10px 10px 0;
+    }
+
+    .card-input-wrapper.new {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .card-input-wrapper.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .card-input-wrapper.removing {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    .card-input-wrapper input.card-role {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid var(--secondary-color);
+      border-radius: 25px;
+      font-size: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-color);
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(123, 31, 162, 0.3);
+      box-sizing: border-box;
+    }
+
+
+
+
+    /* Input styling */
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid var(--secondary-color);
+      border-radius: 25px;
+      font-size: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-color);
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(123, 31, 162, 0.3);
+      box-sizing: border-box;
+    }
+
+    #questionInput {
+      width: 100%;
+      max-width: 800px;
+      padding: 12px 15px;
+      border: 2px solid var(--secondary-color);
+      border-radius: 25px;
+      font-size: 1rem;
+      background: rgba(20, 20, 20);
+      color: var(--text-color);
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(123, 31, 162, 0.3);
+      box-sizing: border-box;
+      resize: none;
+      /* Prevents manual resizing */
+      min-height: 50px;
+      /* Initial height */
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+      overflow-y: auto;
+      /* Enables scrolling */
+      scrollbar-width: none;
+      /* Hides scrollbar in Firefox */
+      -ms-overflow-style: none;
+      /* Hides scrollbar in IE/Edge */
+    }
+
+    /* Hides scrollbar in Webkit browsers (Chrome, Safari) */
+    #questionInput::-webkit-scrollbar {
+      display: none;
+    }
+
+    #questionInput:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 20px rgba(255, 152, 0, 0.5);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+
+    /* Remove bottom margin from input in wrapper */
+    .input-wrapper input {
+      margin-bottom: 0;
+    }
+
+    input.card-role {
+      width: 15%;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 20px rgba(255, 152, 0, 0.5);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    button {
+      padding: 12px 25px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 25px;
+      background: var(--secondary-color);
+      color: white;
+      cursor: pointer;
+      transition: box-shadow 2.0s ease;
+
+      box-shadow: 0 0 10px rgba(123, 31, 162, 0.5);
+      position: relative;
+      overflow: hidden;
+      white-space: nowrap;
+      margin-right: 10px;
+    }
+
+    button:hover {
+      background: var(--accent-color);
+      transform: translateY(-3px);
+      box-shadow: 0 5px 5px rgba(234, 174, 23, 0.699);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      border-radius: 100%;
+      transform: scale(1, 1) translate(-50%, -50%);
+      transform-origin: 50% 50%;
+    }
+
+    button:focus:not(:active)::after {
+      animation: ripple 0.8s ease-out;
+    }
+
+    #tarotContainer {
+      margin: 30px auto;
+      perspective: 1000px;
+      max-width: 1200px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      gap: 20px;
+    }
+
+    .card-container {
+      position: relative;
+      width: 200px;
+      height: 351px;
+      margin: 0 auto;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    .card {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 2px solid var(--accent-color);
+      background: var(--card-bg);
+      border-radius: 15px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+      backface-visibility: hidden;
+      transition: transform 1s ease, box-shadow 0.5s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+
+    .card:hover {
+      box-shadow: 0 0 30px 5px rgba(255, 152, 0, 0.6);
+    }
+
+    .card.back {
+      background: linear-gradient(135deg, #3a1c59, #191231);
+      transform: rotateY(0deg);
+      background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%237b1fa2' fill-opacity='0.4' fill-rule='evenodd'%3E%3Cpath d='M0 20L20 0L40 20L20 40z' /%3E%3C/g%3E%3C/svg%3E");
+      background-size: 30px 30px;
+    }
+
+    .card.front {
+      transform: rotateY(180deg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .card.front img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      border-radius: 10px;
+      transition: transform 0.5s ease;
+    }
+
+    .flipped .card.front {
+      transform: rotateY(0deg);
+    }
+
+    .flipped .card.back {
+      transform: rotateY(-180deg);
+    }
+
+    #cardDefinitions {
+      animation: fadeIn 1.4s ease;
+
+    }
+
+    #cardDefinitions h2,
+    #addCardButton,
+    #removeCardButton,
+    #randomReadingContainer {
+      animation: fadeIn 1.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes spin {
+      0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+
+      100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(0, 0);
+        opacity: 1;
+      }
+
+      20% {
+        transform: scale(25, 25);
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(40, 40);
+      }
+    }
+
+    @keyframes twinkle {
+
+      0%,
+      100% {
+        opacity: var(--opacity);
+      }
+
+      50% {
+        opacity: 0.2;
+      }
+    }
+
+    @keyframes cardFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .card-container.new {
+      animation: cardFadeIn 0.5s ease forwards;
+    }
+
+    /* Cosmic dust and stars styles */
+    .cosmic-dust {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+      opacity: 0.5;
+      background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='10' cy='10' r='1'/%3E%3Ccircle cx='30' cy='40' r='0.5'/%3E%3Ccircle cx='50' cy='20' r='0.8'/%3E%3Ccircle cx='70' cy='70' r='0.7'/%3E%3Ccircle cx='90' cy='30' r='0.6'/%3E%3Ccircle cx='20' cy='80' r='0.9'/%3E%3Ccircle cx='60' cy='50' r='0.4'/%3E%3Ccircle cx='80' cy='90' r='0.5'/%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle var(--duration) ease-in-out infinite;
+      opacity: var(--opacity);
+    }
+
+    #response {
+      margin: 70px auto 30px;
+      padding: 30px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      max-width: 600px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    #response.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .card-response {
+      margin-bottom: 30px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 152, 0, 0.3);
+      padding-bottom: 20px;
+      overflow: hidden;
+      transition: max-height 0.5s ease, opacity 0.5s ease;
+      max-height: 1000px;
+      /* Set to a high enough value for your content */
+      opacity: 1;
+    }
+
+    .card-response.collapsed {
+      max-height: 0;
+      opacity: 0;
+    }
+
+    .card-header {
+      margin-bottom: 0px;
+      text-align: center;
+    }
+
+    .card-title {
+      color: var(--accent-color);
+      font-size: 1.8rem;
+      text-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
+      margin: 0;
+    }
+
+    .card-role {
+      font-size: 1.2rem;
+      color: var(--accent-color);
+      margin-bottom: 0px;
+    }
+
+    .card-role:not(input) {
+      text-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
+    }
+
+    .card-subtitle {
+      color: var(--text-color);
+      font-size: 1.1rem;
+      font-style: italic;
+      margin: 5px 0;
+      margin-bottom: 20px;
+      opacity: 0.9;
+    }
+
+    .response-text {
+      font-size: 1.2rem;
+      color: var(--text-color);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    button.regenerate {
+      display: block;
+      margin: 20px auto;
+    }
+
+
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2.2rem;
+      }
+
+      p {
+        font-size: 1rem;
+      }
+
+      input[type="text"] {
+        width: 90%;
+      }
+
+      .card-title {
+        font-size: 1.5rem;
+      }
+
+      .card-subtitle {
+        font-size: 1rem;
+      }
+
+      .response-text {
+        font-size: 1.1rem;
+      }
+
+      #response {
+        padding: 20px;
+      }
+    }
+
+    /* Custom Dropdown Styles */
+    .dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      background: rgba(20, 20, 20, 0.9);
+      border: 1px solid var(--secondary-color);
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1001;
+    }
+
+    .dropdown-item {
+      padding: 10px 15px;
+      color: var(--text-color);
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .dropdown-item:hover {
+      background: var(--secondary-color);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Ensure the consult button is positioned relative so the loader can be centered */
+    /* Primary Action Button - Consult the Cards */
+    #consultBtn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      width: 180px;
+      height: 50px;
+      box-sizing: border-box;
+      border: none;
+      border-radius: 25px;
+      background: linear-gradient(135deg, #7b1fa2, #2c0d45);
+      color: white;
+      cursor: pointer;
+      overflow: hidden;
+      transition: width 0.3s ease, background 0.3s ease, transform 0.3s ease;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      box-shadow: 0 5px 15px rgba(123, 31, 162, 0.5), 0 0 20px rgba(255, 152, 0, 0.3);
+    }
+
+
+    #consultBtn:hover {
+      background: linear-gradient(135deg, #9c27b0, #4a148c);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(123, 31, 162, 0.7), 0 0 25px rgba(255, 152, 0, 0.5);
+      animation: glow 1.5s ease-in-out infinite;
+    }
+
+    #consultBtn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 10px rgba(123, 31, 162, 0.5);
+    }
+
+    /* Secondary Mystical Button - Generate Random Question */
+    #randomReadingContainer button {
+      padding: 12px 25px;
+      font-size: 1rem;
+      border: 2px solid var(--accent-color);
+      border-radius: 25px;
+      background: rgba(44, 13, 69, 0.8);
+      color: var(--accent-color);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(255, 152, 0, 0.3);
+      font-style: italic;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #randomReadingContainer button:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 152, 0, 0.2), transparent);
+      transition: all 0.6s ease;
+    }
+
+    #randomReadingContainer button:hover {
+      color: white;
+      background: rgba(44, 13, 69, 0.9);
+      border-color: var(--accent-color);
+      box-shadow: 0 0 20px rgba(255, 152, 0, 0.6);
+    }
+
+    #randomReadingContainer button:hover:before {
+      left: 100%;
+    }
+
+    #randomReadingContainer button:active {
+      transform: translateY(2px);
+      box-shadow: 0 0 10px rgba(255, 152, 0, 0.3);
+    }
+
+    /* Tertiary Buttons - Add/Remove Card Buttons */
+    #addCardButton,
+    #removeCardButton {
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      border: 1px solid var(--secondary-color);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-color);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 8px rgba(123, 31, 162, 0.2);
+      margin-right: 10px;
+      margin-top: 15px;
+      width: 140px;
+    }
+
+    #addCardButton:hover,
+    #removeCardButton:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent-color);
+    }
+
+    #addCardButton:active,
+    #removeCardButton:active {
+      transform: translateY(1px);
+      box-shadow: 0 0 5px rgba(123, 31, 162, 0.1);
+    }
+
+    /* Regenerate buttons within card responses */
+    button.regenerate {
+      padding: 8px 18px;
+      font-size: 0.9rem;
+      border: 1px solid var(--accent-color);
+      border-radius: 20px;
+      background: rgba(44, 13, 69, 0.6);
+      color: var(--accent-color);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 15px auto;
+      display: block;
+    }
+
+    button.regenerate:hover {
+      background: rgba(44, 13, 69, 0.8);
+      color: white;
+      box-shadow: 0 0 15px rgba(255, 152, 0, 0.4);
+    }
+
+    /* Preserve existing spinner styles for the consultBtn */
+    #consultBtn .loader {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      transform: translate(-50%, -50%) rotate(0deg);
+      animation: spin 1s linear infinite;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #consultBtn.loading {
+      width: 50px;
+      background: linear-gradient(135deg, #ff9800, #e65100);
+    }
+
+    #consultBtn.loading .btn-text {
+      opacity: 0;
+    }
+
+    #consultBtn.loading .loader {
+      opacity: 1;
+    }
+
+    @keyframes glow {
+      0% {
+        box-shadow: 0 5px 15px rgba(123, 31, 162, 0.5), 0 0 10px rgba(255, 152, 0, 0.3);
+      }
+
+      50% {
+        box-shadow: 0 5px 15px rgba(123, 31, 162, 0.5), 0 0 25px rgba(255, 152, 0, 0.6);
+      }
+
+      100% {
+        box-shadow: 0 5px 15px rgba(123, 31, 162, 0.5), 0 0 10px rgba(255, 152, 0, 0.3);
+      }
+    }
+
+    #crazyModeToggle {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      opacity: 0.2;
+      background: var(--secondary-color);
+      color: white;
+      border: none;
+      border-radius: 2cqmax;
+      width: 10px;
+      height: 40px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+    }
+
+
+    #crazyModeToggle:hover {
+      transform: scale(1.1);
+      animation: glow 1.5s ease-in-out infinite;
+    }
+  </style>
+</head>
+
+<body>
+
+  <audio id="mysticalMusic" autoplay loop>
+    <source src="mystical-music.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+  <script>
+    const audio = document.getElementById('mysticalMusic');
+    audio.addEventListener('loadedmetadata', () => {
+      audio.volume = 0.15; // Set volume to 50%
+    });
+  </script>
+  <script>
+    function startMusic() {
+      const audio = document.getElementById('mysticalMusic');
+
+      audio.play().catch(e => console.log('Playback failed:', e));
+      // Remove the event listener once music is started
+      document.removeEventListener('click', startMusic);
+    }
+    document.addEventListener('click', startMusic);
+  </script>
+  <!-- Background container with tilting effect -->
+  <div id="backgroundContainer">
+    <div class="stars"></div>
+    <div class="cosmic-dust"></div>
+  </div>
+
+  <h1>Ask the spirits about <span id="dynamicWord">anything</span>.</h1>
+  <p>Ask your question and let the spirits scream their perspective.<br>THIS IS NOT A REAL CONNECTION TO THE SPIRITS.
+  </p>
+
+  <!-- User Question with Custom Dropdown and Inline Button -->
+  <div id="questionContainer">
+    <div class="input-wrapper">
+      <!-- <input type="text" id="questionInput" placeholder="What does your soul seek to know?" autocomplete="off"> -->
+      <textarea id="questionInput" placeholder="What does your soul seek to know?" rows="2"></textarea>
+
+      <div id="customDropdown" class="dropdown hidden"></div>
+    </div>
+    <button id="consultBtn" onclick="askQuestion()">
+      <span class="btn-text">Consult the Cards</span>
+      <div class="loader" id="loader"></div>
+    </button>
+  </div>
+
+  <!-- New Random Reading Button -->
+  <div id="randomReadingContainer">
+    <button onclick="generateRandomReading()">Generate Random Question</button>
+  </div>
+
+  <!-- Card Spread Definitions -->
+  <div id="cardDefinitions">
+    <h2>Define Your Card Positions</h2>
+    <div id="cardInputs">
+      <div class="card-input-wrapper visible">
+        <input type="text" class="card-role" placeholder="Card role (e.g., Past)">
+      </div>
+      <div class="card-input-wrapper visible">
+        <input type="text" class="card-role" placeholder="Card role (e.g., Present)">
+      </div>
+      <div class="card-input-wrapper visible">
+        <input type="text" class="card-role" placeholder="Card role (e.g., Future)">
+      </div>
+    </div>
+    <button id="addCardButton" onclick="addCardInput()">Add Card</button>
+    <button id="removeCardButton" onclick="removeCardInput()">Remove Card</button>
+  </div>
+
+  <!-- Card Display -->
+  <div id="tarotContainer"></div>
+  <!-- Oracle Response -->
+  <div id="response"></div>
+  <!-- Secret button for toggling Crazy Mode -->
+  <!-- Secret button for toggling Crazy Mode -->
+  <button id="crazyModeToggle" title="Welcome ALL spirits...">
+    ★
+  </button>
+  <script type="module" src="oracle.js">
+  </script>
+
+</body>
+
+</html>
