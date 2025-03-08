@@ -414,7 +414,7 @@ async function askQuestion() {
     const initialPositions = oldCards.map((card) =>
       card.getBoundingClientRect()
     );
-    await sleep(500);
+    await sleep(200);
     const cardIndex = Math.floor(Math.random() * tarotCards.length);
     const card = tarotCards[cardIndex];
     const isReversed = Math.random() < 0.5;
